@@ -72,20 +72,24 @@ class HttpTransport(Transport):
         response = self._request("GET", "/ping")
         return response[1] == "OK"
 
-    def get(self, bucket, key, r, vtag=None):
-        params = {"r" : r}
+    def get(self, bucket, key, r=None, vtag=None):
+        params = {}
+        if r is not None:
+            params["r"] = r
         if vtag is not None:
             params["vtag"] = vtag
         url = self._build_rest_path(bucket, key, params=params)
         response = self._request("GET", url)
         return self._parse_response(response, 200, 300, 404)
 
-    def put(self, bucket, key, content, headers, w, dw, return_body=True):
+    def put(self, bucket, key, content, headers, w=None, dw=None, return_body=True):
         params = {
                     "returnbody" : "true" if return_body else "false",
-                    "w" : w,
-                    "dw" : dw
                 }
+        if w is not None:
+            params["w"] = w
+        if dw is not None:
+            params["dw"] = dw
         url = self._build_rest_path(bucket, key, params=params)
 
         if key is None:
@@ -107,8 +111,11 @@ class HttpTransport(Transport):
                 self._assert_http_code(response, 204)
                 return None, None, None
 
-    def delete(self, bucket, key, rw):
-        params = {"rw" : rw}
+    def delete(self, bucket, key, rw=None):
+        if rw is None:
+            params = {}
+        else:
+            params = {"rw" : rw}
         url = self._build_rest_path(bucket, key, params)
         self._assert_http_code(self._request("DELETE", url), 204, 404)
 
