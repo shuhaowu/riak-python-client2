@@ -156,12 +156,3 @@ class Transport(object):
         :rtypes: A list of keys.
         """
         raise NotImplementedError
-
-    def get_file(self, key):
-        raise NotImplementedError
-
-    def delete_file(self, key):
-        raise NotImplementedError
-
-    def store_file(self, key, content_type="application/octet-stream", content=None):
-        raise NotImplementedError
