@@ -145,5 +145,14 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
 
         self.transport.delete("test_bucket", "foo", 2)
 
+    def test_mapreduce(self):
+        headers = self.transport.make_put_header("application/json", [], [], {})
+        self.transport.put("test_bucket", "foo", "{1 : 2}", headers, 2, 2)
+        result = self.transport.mapreduce("test_bucket", [{"map":{"language": "javascript", "name": "Riak.mapValuesJson"}}])
+        self.assertEqual(1, len(result))
+        self.assertEqual(2, result[0][u"1"])
+        self.transport.delete("test_bucket", "foo", 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

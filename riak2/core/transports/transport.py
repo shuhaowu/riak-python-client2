@@ -142,7 +142,7 @@ class Transport(object):
         :param input: The input
         :param query: The query dictionary
         :param timeout: Timeout values.
-        :rtype: A list of results"""
+        :rtype: A list of results. These results are decoded via json.loads"""
         raise NotImplementedError
 
     def index(self, bucket, field, start, end=None):
