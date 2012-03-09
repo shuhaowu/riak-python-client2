@@ -2,7 +2,7 @@ from exceptions import ConnectionError, RiakError
 from transport import Transport
 from connection import ConnectionManager
 import errno
-import urllib
+from urllib import quote_plus
 import csv
 import re
 import json
@@ -135,6 +135,16 @@ class HttpTransport(Transport):
 
         self._assert_http_code(response, 204)
 
+    def index(self, bucket, field, start, end=None):
+        url = "/buckets/%s/index/%s/%s" % (quote_plus(bucket),
+                                           quote_plus(str(field)),
+                                           quote_plus(str(start)))
+        if end is not None:
+            url += "/" + quote_plus(str(end))
+        response = self._request("GET", url)
+        self._assert_http_code(response, 200)
+        return json.loads(response[1])["keys"]
+
     def mapreduce(self, inputs, query, timeout=None):
         job = {"inputs": inputs, "query": query}
         if timeout is not None:
@@ -149,16 +159,16 @@ class HttpTransport(Transport):
         # Build "http://hostname:port/prefix/bucket"
         path = "/" + (prefix or self._prefix)
         if bucket is not None:
-            path += "/" + urllib.quote_plus(bucket)
+            path += "/" + quote_plus(bucket)
 
         if key is not None:
-            path += "/" + urllib.quote_plus(key)
+            path += "/" + quote_plus(key)
 
         if params is not None:
             s = ""
             for k in params.keys():
                 if s != "": s += "&"
-                s += urllib.quote_plus(k) + "=" + urllib.quote_plus(str(params[k]))
+                s += quote_plus(k) + "=" + quote_plus(str(params[k]))
             path += "?" + s
 
         return path
@@ -231,6 +241,8 @@ class HttpTransport(Transport):
                 reader = csv.reader([value], skipinitialspace=True)
                 for line in reader:
                     for token in line:
+                        if field.endswith("_int"):
+                            token = int(token)
                         metadata["index"].append((field, token))
             elif header == "link":
                 links.extend(self._parse_links(value))
@@ -259,9 +271,9 @@ class HttpTransport(Transport):
     def _to_link_header(self, bucket, key, tag):
         header = '</'
         header += self._prefix + '/'
-        header += urllib.quote_plus(bucket) + '/'
-        header += urllib.quote_plus(key) + '>; riaktag="'
-        header += urllib.quote_plus(tag) + '"'
+        header += quote_plus(bucket) + '/'
+        header += quote_plus(key) + '>; riaktag="'
+        header += quote_plus(tag) + '"'
         return header
 
 

@@ -145,6 +145,18 @@ class Transport(object):
         :rtype: A list of results"""
         raise NotImplementedError
 
+    def index(self, bucket, field, start, end=None):
+        """Perform an indexing operation.
+
+        :param bucket: The bucket name
+        :param field: The field name
+        :param start: The start value
+        :param end: The end value. Defaults to None. If left as None, start w
+                    be used as an exact value.
+        :rtypes: A list of keys.
+        """
+        raise NotImplementedError
+
     def get_file(self, key):
         raise NotImplementedError
 
