@@ -98,7 +98,18 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
         result = self.transport.get_keys("test_bucket")
         self.assertEqual(0, len(result))
 
+    def test_get_buckets(self):
+        result = self.transport.get_buckets()
+        self.assertTrue(isinstance(result, list))
+        # TODO: How to test? printing it make it seem like it worked
 
+    def test_get_set_bucket_properties(self):
+        result = self.transport.get_bucket_properties("test_bucket")
+        self.assertTrue(isinstance(result, dict))
+        self.transport.set_bucket_properties("test_bucket", {"w" : "all"})
+        result = self.transport.get_bucket_properties("test_bucket")
+        self.assertEqual("all", result["w"])
+        self.transport.set_bucket_properties("test_bucket", {"w" : "quorum"})
 
 
 if __name__ == "__main__":

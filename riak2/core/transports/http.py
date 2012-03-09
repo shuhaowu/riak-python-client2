@@ -130,7 +130,7 @@ class HttpTransport(Transport):
     def set_bucket_properties(self, bucket, properties):
         url = self._build_rest_path(bucket)
         headers = {"Content-Type" : "application/json"}
-        content = json.dumps({"props" : props})
+        content = json.dumps({"props" : properties})
         response = self._request("PUT", url, headers, content)
 
         self._assert_http_code(response, 204)
