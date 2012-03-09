@@ -1,4 +1,4 @@
-from riak2.core.transports.http import HttpTransport
+from riak2.core import HttpTransport
 import unittest
 
 class Riak2CoreHttpTransportTest(unittest.TestCase):

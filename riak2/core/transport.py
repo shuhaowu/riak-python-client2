@@ -34,7 +34,7 @@ class Transport(object):
 
     @classmethod
     def random_client_id(self):
-        return "py_%s" % base64.b64encode(str(random.randint(1, 0x40000000)))
+        return "py2_%s" % base64.b64encode(str(random.randint(1, 0x40000000)))
 
     @classmethod
     def fixed_client_id(self):
