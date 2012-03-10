@@ -1,3 +1,22 @@
+# Copyright 2012 Shuhao Wu <shuhao@shuhaowu.com>
+# Copyright 2010 Rusty Klophaus <rusty@basho.com>
+# Copyright 2010 Justin Sheehy <justin@basho.com>
+# Copyright 2009 Jay Baird <jay@mochimedia.com>
+#
+# This file is provided to you under the Apache License,
+# Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License.  You may obtain
+# a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 from exceptions import ConnectionError, RiakError
 from transport import Transport
 from connection import ConnectionManager
@@ -18,7 +37,11 @@ class HttpTransport(Transport):
     api = 2
     RETRY_COUNT = 3
 
-    def make_put_header(self, content_type, links, indexes, metadata, vclock=None):
+    def make_put_header(self, content_type="application/json",
+                              links=[],     # These are safe. Why? Because I'm
+                              indexes=[],   # not modifying them in the function
+                              metadata={},  # If you do, you should change this.
+                              vclock=None):
         """Creates a header for put. This is done so that the function arguments
         for put is not too crazy, and it also gives you a chance to manipulate
         the headers if required.
@@ -82,7 +105,9 @@ class HttpTransport(Transport):
         response = self._request("GET", url)
         return self._parse_response(response, 200, 300, 404)
 
-    def put(self, bucket, key, content, headers, w=None, dw=None, return_body=True):
+    def put(self, bucket, key, content, meta, w=None, dw=None, return_body=True, meta_is_headers=False):
+        headers = meta if meta_is_headers else self.make_put_header(**meta)
+
         params = {
                     "returnbody" : "true" if return_body else "false",
                 }

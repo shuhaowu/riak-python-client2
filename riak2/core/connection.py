@@ -19,7 +19,6 @@ import httplib
 import contextlib
 import socket
 
-
 class NoHostsDefined(Exception): pass
 
 class ConnectionManager(object):

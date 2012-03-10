@@ -18,8 +18,8 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
             self.assertEqual(200, result[1]["http_code"])
             self.assertEqual("this is a test", result[2])
 
-        headers = self.transport.make_put_header("text/plain", [], [], {})
-        result = self.transport.put("test_bucket", "foo", "this is a test", headers, 2)
+        meta = {"content_type" : "text/plain"}
+        result = self.transport.put("test_bucket", "foo", "this is a test", meta, 2)
         check(result)
 
         result = self.transport.get("test_bucket", "foo", 2)
@@ -30,13 +30,14 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
         self.assertEqual(result, None)
 
     def test_better_puts_and_get_and_delete(self): # Refactor.. somehow
+        # Also tests meta_is_header
         def check(result):
             self.assertEqual(3, len(result))
             self.assertEqual(200, result[1]["http_code"])
             self.assertEqual("bar", result[1]["usermeta"]["testmeta"])
 
         headers = self.transport.make_put_header("application/json", [], [], {"testmeta" : "bar"})
-        result = self.transport.put("test_bucket", "foo", "{1 : 2}", headers)
+        result = self.transport.put("test_bucket", "foo", "{1 : 2}", headers, meta_is_headers=True)
         check(result)
 
         result = self.transport.get("test_bucket", "foo")
@@ -53,10 +54,9 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
             self.assertEqual(1, len(result[1]["link"]))
             self.assertEqual(("test_bucket", "foo", "test_bucket"), result[1]["link"][0])
 
-        headers = self.transport.make_put_header("application/json", [], [], {})
-        result = self.transport.put("test_bucket", "foo", "{1 : 2}", headers)
-        headers = self.transport.make_put_header("application/json", [("test_bucket", "foo", "test_bucket")], [], {})
-        result = self.transport.put("test_bucket", "bar", "{2 : 3}", headers)
+        result = self.transport.put("test_bucket", "foo", "{1 : 2}", {})
+        meta = {"content_type": "application/json", "links" : [("test_bucket", "foo", "test_bucket")]}
+        result = self.transport.put("test_bucket", "bar", "{2 : 3}", meta)
         check(result)
 
         # Check Result from Get
@@ -68,8 +68,8 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
         self.transport.delete("test_bucket", "bar")
 
     def test_put_no_key(self):
-        headers = self.transport.make_put_header("application/json", [], [], {})
-        result = self.transport.put("test_bucket", None, "{1 : 2}", headers, 2, 2)
+
+        result = self.transport.put("test_bucket", None, "{1 : 2}", {}, 2, 2)
         self.assertEqual(3, len(result))
         key, vclock, metadata = result
         self.assertEqual(201, metadata["http_code"])
@@ -90,9 +90,8 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
         result = self.transport.get_keys("test_bucket")
         self.assertEqual(0, len(result))
 
-        headers = self.transport.make_put_header("application/json", [], [], {})
-        self.transport.put("test_bucket", "foo", "test", headers)
-        self.transport.put("test_bucket", "bar", "test", headers)
+        self.transport.put("test_bucket", "foo", "test", {})
+        self.transport.put("test_bucket", "bar", "test", {})
         result = self.transport.get_keys("test_bucket")
         self.assertEqual(2, len(result))
         self.transport.delete("test_bucket", "foo")
@@ -129,9 +128,9 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
             self.assertEqual(1, len(keys))
             self.assertEqual("foo", keys[0])
 
-        headers = self.transport.make_put_header("application/json", [], [("foo_bin", "test"), ("bar_int", 42)], {})
+        meta = {"content_type": "application/json", "indexes": [("foo_bin", "test"), ("bar_int", 42)]}
 
-        result = self.transport.put("test_bucket", "foo", "{1 : 2}", headers)
+        result = self.transport.put("test_bucket", "foo", "{1 : 2}", meta)
         checkObj(result)
 
         result = self.transport.get("test_bucket", "foo")
@@ -146,8 +145,8 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
         self.transport.delete("test_bucket", "foo")
 
     def test_mapreduce(self):
-        headers = self.transport.make_put_header("application/json", [], [], {})
-        self.transport.put("test_bucket", "foo", "{1 : 2}", headers)
+
+        self.transport.put("test_bucket", "foo", "{1 : 2}", {})
         result = self.transport.mapreduce("test_bucket", [{"map":{"language": "javascript", "name": "Riak.mapValuesJson"}}])
         self.assertEqual(1, len(result))
         self.assertEqual(2, result[0][u"1"])
