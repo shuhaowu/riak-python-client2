@@ -17,25 +17,24 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from copy import copy
-
-class Bucket(object):
-    # SEARCH_PRECOMMIT_HOOK = {"mod": "riak_search_kv_hook", "fun": "precommit"}
-    def __init__(self, client, name):
+class RObject(object):
+    def __init__(self, client, bucket, key=None):
         try:
-            if isinstance(name, basestring):
-                name = name.encode('ascii')
+            if isinstance(key, basestring):
+                key = key.encode('ascii')
         except UnicodeError:
-            raise TypeError('Unicode bucket names are not supported.')
+            raise TypeError('Unicode keys are not supported.')
 
         self.client = client
-        self.transport = client.transport
-        self.name = name
-        self.r = client.r
-        self.w = client.w
-        self.dw = client.dw
-        self.rw = client.rw
-        self.encoders = copy(client.encoders)
-        self.decoders = copy(client.decoders)
+        self.bucket = bucket
+        self.key = key
 
+        self.data = {}
+        self.usermeta = {}
+        self.links = {}
+        self.indexes = {}
+        self.vclock = None
+
+        self._siblings = []
+        self._metadata = []
 

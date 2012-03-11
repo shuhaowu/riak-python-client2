@@ -81,8 +81,8 @@ class HttpTransport(Transport):
 
         return headers
 
-    def __init__(self, cm=None, prefix="riak", mapred_prefix="mapred",
-                 client_id=None, **unused_options):
+    def __init__(self, cm=None, client_id=None, prefix="riak",
+                 mapred_prefix="mapred"):
         if cm is None:
             cm = ConnectionManager.get_http_cm()
         self._connections = cm

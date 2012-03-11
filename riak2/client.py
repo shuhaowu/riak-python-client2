@@ -62,5 +62,3 @@ class Client(object):
 
     def bucket(self, name):
         return Bucket(self, name)
-
-

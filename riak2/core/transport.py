@@ -37,6 +37,17 @@ class Transport(object):
     # Subclass should specify API level.
     # api = 2
 
+    def __init__(self, cm=None, client_id=None):
+        """Initialize a new transport class.
+
+        Note that subclass that implements this should have all arguments be
+        keyword arguments. cm and client_id should always exists.
+
+        :param cm: Connection Manager Instance.
+        :param client_id: A client ID.
+        """
+        raise NotImplementedError
+
     @classmethod
     def random_client_id(self):
         return "py2_%s" % base64.b64encode(str(random.randint(1, 0x40000000)))
