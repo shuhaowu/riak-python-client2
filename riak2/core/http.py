@@ -263,7 +263,7 @@ class HttpTransport(Transport):
         metadata = {"usermeta" : {}, "index" : []}
         links = []
 
-        for header, value in headers.iteritems():
+        for header, value in headers.iteritems(): # header keys are lowered in _request
             if header == "x-riak-vclock":
                 vclock = value
             elif header.startswith("x-riak-meta-"):
