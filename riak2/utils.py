@@ -15,3 +15,12 @@
 # under the License.
 
 doNothing = lambda x: x
+
+class MultiDict(dict):
+    def __setitem__(self, key, value):
+        if not isinstance(value, list):
+            raise TypeError("MultiDict values must be lists!")
+        dict.__setitem__(self, key, value)
+
+    def add(self, key, value):
+        self.setdefault(key, []).append(value)

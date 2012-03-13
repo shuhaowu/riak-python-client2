@@ -32,7 +32,7 @@ class Sibling(object):
         self.data = data
         self.content_type = content_type
 
-        self.indexes = [] if indexes is None else indexes
+        self.indexes = MultiDict() if indexes is None else indexes
         self.links = [] if links is None else links
         self.usermeta = {} if usermeta is None else usermeta
 
@@ -68,9 +68,9 @@ class RObject(object):
             "data": lambda: self.get_data(False),
             "content_type": self.get_content_type,
             "metadata": lambda: self.get_metadata(False),
-            "usermeta": self.get_usermeta,
-            "indexes": self.get_indexes,
-            "links": self.get_links,
+            "usermeta": lambda: self.get_usermeta(False),
+            "indexes": lambda: self.get_indexes(None, False),
+            "links": lambda: self.get_links(None, False),
         }
 
 
@@ -133,6 +133,28 @@ class RObject(object):
 
     def set_usermeta(self, usermeta, use_copy=True):
         return self._set_things("usermeta", usermeta, use_copy)
+
+    def get_indexes(self, field=None, return_copy=True):
+        self._assert_no_conflict()
+        if field is not None:
+            indexes = self._get_only_sibling().indexes.get(field, [])
+            if return_copy:
+                return deepcopy(indexes)
+            else:
+                return indexes
+        else:
+            indexes = self._get_only_sibling().indexes
+            return deepcopy(indexes) if return_copy else indexes
+
+    def set_indexes(self, indexes=None, field=None, use_copy=True):
+        if field is None:
+            self._set_things("indexes", MultiDict(indexes), False) # Always use copy
+        else:
+            self._assert_no_conflict()
+            if use_copy:
+                indexes = deepcopy(indexes)
+
+            self._get_only_sibling().indexes[field] = indexes
 
     def reload(self, r=None, vtag=None):
         response = self.client.transport.get(self.bucket.name, self.key,
