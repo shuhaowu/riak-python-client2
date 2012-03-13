@@ -28,7 +28,7 @@ class Sibling(object):
         self.obj = obj
 
         self.vclock = vclock
-        self.metadata = metadata
+        self.metadata = {} if metadata is None else metadata
         self.data = data
         self.content_type = content_type
 
@@ -64,37 +64,75 @@ class RObject(object):
 
         self._conflict_handler = conflict_handler
 
+        self._getattr_mapper = {
+            "data": lambda: self.get_data(False),
+            "content_type": self.get_content_type,
+            "metadata": lambda: self.get_metadata(False),
+            "usermeta": self.get_usermeta,
+            "indexes": self.get_indexes,
+            "links": self.get_links,
+        }
+
 
     def _assert_no_conflict(self):
         if len(self.siblings) > 1:
             raise ConflictError("Multiple siblings found for %s!" % self.key)
 
-    def get_data(self, return_copy=True):
-        self._assert_no_conflict()
-        if len(self.siblings) == 1:
-            if return_copy:
-                return deepcopy(self.siblings.values()[0].data)
-            else:
-                return self.siblings.values()[0].data
-        else:
-            return None
+    def _get_only_sibling():
+        if len(self.siblings) == 0:
+            self.siblings[None] = Sibling(self)
 
-    def set_data(self, data, use_copy=True):
+        return self.siblings.values()[0]
+
+    def _set_things(self, attribute, things, use_copy=True):
         self._assert_no_conflict()
         if use_copy:
-            datacopy = deepcopy(data)
-        else:
-            datacopy = data
+            things = deepcopy(things)
 
-        if len(self.siblings) == 0:
-            sib = Sibling(self, data=datacopy)
-            self.siblings[None] = sib
+        setattr(self._get_only_sibling(), attribute, things)
+        return self
+
+    def _get_things(self, attribute, return_copy=True):
+        self._assert_no_conflict()
+        if return_copy:
+            return deepcopy(getattr(self._get_only_sibling, attribute))
         else:
-            self.siblings.values()[0].data = datacopy
+            return getattr(self._get_only_sibling, attribute)
+
+    def __getattr__(self, name):
+        callback = self._getattr_mapper.get(name, None)
+        if callback is None:
+            raise AttributeError("%s doesn't exist!" % name)
+        return callback()
+
+    def get_data(self, return_copy=True):
+        return self._get_things("data", return_copy)
+
+    def set_data(self, data, use_copy=True):
+        return self._set_things("data", data, use_copy)
 
     def get_encoded_data(self):
         self._assert_no_conflict()
+        encoder = self.bucket.encoders.get(self.content_type, doNothing)
+        return encoder(self._get_only_sibling().data)
 
+    def get_content_type(self):
+        return self._get_things("content_type", False)
+
+    def set_content_type(self, content_type):
+        return self._set_things("content_type", content_type, False)
+
+    def get_metadata(self, return_copy=True):
+        return self._get_things("metadata", return_copy)
+
+    def set_metadata(self, metadata, use_copy=True):
+        return self._set_things("metadata", metadata, use_copy)
+
+    def get_usermeta(self, return_copy=True):
+        return self._get_things("usermeta", return_copy)
+
+    def set_usermeta(self, usermeta, use_copy=True):
+        return self._set_things("usermeta", usermeta, use_copy)
 
     def reload(self, r=None, vtag=None):
         response = self.client.transport.get(self.bucket.name, self.key,
@@ -131,6 +169,4 @@ class RObject(object):
     def on_conflict(self, func):
         self._conflict_handler = func
         return self
-
-
 
