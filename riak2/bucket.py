@@ -20,11 +20,15 @@
 from copy import copy
 from utils import doNothing
 from robject import RObject
-from weakref import WeakValueDictionary
 
 class Bucket(object):
     # SEARCH_PRECOMMIT_HOOK = {"mod": "riak_search_kv_hook", "fun": "precommit"}
     def __init__(self, client, name):
+        """Construct a new bucket instance. You could also just use client[name]
+
+        :param client: A client object.
+        :param name: Bucket name. Make sure it doesn't have unicode. Issue #32
+        """
         name = self._ensure_ascii(name)
         self.client = client
         self.transport = client.transport
@@ -36,18 +40,30 @@ class Bucket(object):
         self.encoders = copy(client.encoders)
         self.decoders = copy(client.decoders)
 
-    def _ensure_ascii(self, data):
+    def _ensure_ascii(self, data): # temporary fix.
         try:
             if isinstance(data, basestring):
-                data = data.encode('ascii')
+                data = data.encode("ascii")
         except UnicodeError:
-            raise TypeError('Unicode data values are not supported.')
+            raise TypeError("Unicode data values are not supported.")
 
         return data
 
     def new(self, key, data=None,
             content_type="application/json",
             conflict_handler=doNothing):
+        """Construct a new riak object. A short form for manually creating one.
+
+        :param key: The key of the object. If you put it as None, one will be
+                    generated when you save the object by Riak for you.
+        :param data: The data you want to store. Make sure it matches
+                     content_type. Defaults to None.
+        :param content_type: The content type. Defaults to application/json
+        :param conflict_handler: A conflict handler in case of conflict.
+                                 Takes the object as argument and resolves
+                                 conflict if necessary.
+        :type conflict_handler: function
+        :rtype: RObject"""
         data = self._ensure_ascii(data)
         obj = RObject(self.client, self, key, conflict_handler)
         obj.data = data
@@ -56,6 +72,12 @@ class Bucket(object):
         return obj
 
     def get(self, key, r=None, conflict_handler=doNothing):
+        """Gets an object from Riak given a key.
+
+        :param key: The key
+        :param r: The r value
+        :param conflict_handler: A function that handles conflict.
+        :rtype: RObject
+        """
         obj = RObject(self.client, self, key, conflict_handler)
         return obj.reload(r or self.r)
-

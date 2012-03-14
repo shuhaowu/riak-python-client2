@@ -46,6 +46,9 @@ class Sibling(object):
 
         self.data = self.obj.bucket.decoders.get(self.content_type, doNothing)(self.data)
 
+    def encoded_data(self):
+        return self.obj.bucket.encoders.get(self.content_type, doNothing)(self.data)
+
 
 class RObject(object):
     def __init__(self, client, bucket, key=None, conflict_handler=doNothing):
@@ -55,16 +58,16 @@ class RObject(object):
         except UnicodeError:
             raise TypeError('Unicode keys are not supported.')
 
-        self.client = client
-        self.bucket = bucket
-        self.key = key
+        self.__dict__["client"] = client
+        self.__dict__["bucket"] = bucket
+        self.__dict__["key"] = key
 
-        self.siblings = {}
-        self.exists = False
+        self.__dict__["siblings"] = {}
+        self.__dict__["exists"] = False
 
-        self._conflict_handler = conflict_handler
+        self.__dict__["_conflict_handler"] = conflict_handler
 
-        self._getattr_mapper = {
+        self.__dict__["_getattr_mapper"] = {
             "data": lambda: self.get_data(False),
             "content_type": self.get_content_type,
             "metadata": lambda: self.get_metadata(False),
@@ -73,7 +76,7 @@ class RObject(object):
             "links": lambda: self.get_links(False),
         }
 
-        self._setattr_mapper = {
+        self.__dict__["_setattr_mapper"] = {
             "data": lambda value: self.set_data(value, False),
             "content_type": self.set_content_type,
             "metadata": lambda value: self.set_metadata(value, False),
@@ -87,7 +90,7 @@ class RObject(object):
         if len(self.siblings) > 1:
             raise ConflictError("Multiple siblings found for %s!" % self.key)
 
-    def _get_only_sibling():
+    def _get_only_sibling(self):
         if len(self.siblings) == 0:
             self.siblings[None] = Sibling(self)
 
@@ -104,9 +107,9 @@ class RObject(object):
     def _get_things(self, attribute, return_copy=True):
         self._assert_no_conflict()
         if return_copy:
-            return deepcopy(getattr(self._get_only_sibling, attribute))
+            return deepcopy(getattr(self._get_only_sibling(), attribute))
         else:
-            return getattr(self._get_only_sibling, attribute)
+            return getattr(self._get_only_sibling(), attribute)
 
     def __getattr__(self, name):
         callback = self._getattr_mapper.get(name, None)
