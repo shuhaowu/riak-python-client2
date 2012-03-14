@@ -181,6 +181,21 @@ class Riak2HigherAPITest(unittest.TestCase):
         self.assertFalse(obj.exists)
         self.assertFalse(same_obj.exists)
 
+    def test_new_object_metadata_indexes(self):
+        bucket = self.client["test_bucket"]
+        obj = bucket.new("foo")
+        obj.indexes.add("foo_bin", "bar")
+        obj.indexes.add("foo2_int", 2)
+        obj.usermeta["test"] = "value"
+        obj.data = {"some_key": "some_value"}
+        obj.store()
+        same_obj = bucket.get("foo")
+        obj.delete()
+        self.assertEqual("value", same_obj.usermeta["test"])
+        self.assertTrue("bar" in same_obj.indexes["foo_bin"])
+        self.assertTrue(2 in same_obj.indexes["foo2_int"])
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -39,7 +39,10 @@ class Sibling(object):
     def set(self, response):
         self.vclock, self.metadata, self.data = response
 
-        self.indexes = self.metadata.pop("index")
+        indexes = self.metadata.pop("index")
+        self.indexes = MultiDict()
+        for field, value in indexes:
+            self.indexes.add(field, value)
         self.content_type = self.metadata.pop("content-type")
         self.links = self.metadata.pop("link")
         self.usermeta = self.metadata.pop("usermeta")
@@ -276,7 +279,11 @@ class RObject(object):
         dw = dw or self.bucket.dw
         meta = self.get_metadata()
         meta["links"] = self.get_links()
-        meta["indexes"] = self.get_indexes()
+        indexes = []
+        for field, values in self.indexes.iteritems():
+            for value in values:
+                indexes.append(Index(field, value))
+        meta["indexes"] = indexes
         meta["usermeta"] = self.get_usermeta()
         data = self.get_encoded_data()
         response = self.client.transport.put(self.bucket.name, self.key, data, meta, w, dw)
