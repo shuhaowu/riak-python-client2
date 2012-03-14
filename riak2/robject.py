@@ -74,6 +74,7 @@ class RObject(object):
             "usermeta": lambda: self.get_usermeta(False),
             "indexes": lambda: self.get_indexes(None, False),
             "links": lambda: self.get_links(False),
+            "vclock" : self.get_vclock
         }
 
         self.__dict__["_setattr_mapper"] = {
@@ -118,6 +119,10 @@ class RObject(object):
         return callback()
 
     def __setattr__(self, name, value):
+        if name in self.__dict__:
+            self.__dict__[name] = value
+            return
+
         callback = self._setattr_mapper.get(name, None)
         if callback is None:
             raise AttributeError("%s doesn't exist!" % name)
@@ -131,8 +136,7 @@ class RObject(object):
 
     def get_encoded_data(self):
         self._assert_no_conflict()
-        encoder = self.bucket.encoders.get(self.content_type, doNothing)
-        return encoder(self._get_only_sibling().data)
+        return self._get_only_sibling().encoded_data()
 
     def get_content_type(self):
         return self._get_things("content_type", False)
@@ -220,6 +224,10 @@ class RObject(object):
         sibling.links.remove(link)
         return self
 
+    def get_vclock(self):
+        self._assert_no_conflict()
+        return self._get_only_sibling().vclock
+
     def reload(self, r=None, vtag=None):
         response = self.client.transport.get(self.bucket.name, self.key,
                                              r or self.bucket.r, vtag) # i <3 this line
@@ -257,11 +265,32 @@ class RObject(object):
         return self
 
     def clear(self):
-        pass
+        self.key = None
+        self.siblings = {}
+        self.exists = False
+        return self
 
     def store(self, w=None, dw=None, return_body=True):
-        pass
+        self._assert_no_conflict()
+        w = w or self.bucket.w
+        dw = dw or self.bucket.dw
+        meta = self.get_metadata()
+        meta["links"] = self.get_links()
+        meta["indexes"] = self.get_indexes()
+        meta["usermeta"] = self.get_usermeta()
+        data = self.get_encoded_data()
+        response = self.client.transport.put(self.bucket.name, self.key, data, meta, w, dw)
+        if self.key is None:
+            self.key, vclock, metadata = response
+            self._load_with_response((vclock, metadata, data))
+        else:
+            self._load_with_response(response)
+        self.exists = True
+        return self
 
     def delete(self, rw=None):
-        pass
+        rw = rw or self.bucket.rw
+        self.client.transport.delete(self.bucket.name, self.key, rw)
+        self.clear()
+        return self
 

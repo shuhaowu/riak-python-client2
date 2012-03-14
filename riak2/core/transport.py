@@ -93,9 +93,9 @@ class Transport(object):
         :param content: The content/body for the PUT/POST request
         :type content: string
         :param meta: The metadatas.
-        :type meta: dictionary. Keys are: content_type, links, indexes, metadata, vclock
+        :type meta: dictionary. Keys are: content_type, links, indexes, usermeta, vclock
                     content_type defaults to application/json.
-                    links, indexes, and metadata all defaults to nothing.
+                    links, indexes, and usermeta all defaults to nothing.
                     vclock also defaults to nothing.
         :param w: The W value. Defaults to None, which uses db default
         :param dw: The DW value. Defaults to None, which uses db default

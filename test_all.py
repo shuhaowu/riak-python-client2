@@ -167,10 +167,20 @@ class Riak2HigherAPITest(unittest.TestCase):
     def test_new_object_simple(self):
         bucket = self.client["test_bucket"]
         obj = bucket.new("foo")
+        self.assertEqual("foo", obj.key)
         self.assertTrue(obj.data is None)
         self.assertTrue(obj.get_data() is None)
         self.assertEqual("application/json", obj.content_type)
         self.assertEqual("application/json", obj.get_content_type())
+        obj.data = {"some_key" : "some_value"}
+        obj.store()
+        same_obj = bucket.get("foo")
+        self.assertEqual(u"some_value", same_obj.data[u"some_key"])
+        same_obj.delete()
+        obj.reload()
+        self.assertFalse(obj.exists)
+        self.assertFalse(same_obj.exists)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

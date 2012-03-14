@@ -40,7 +40,7 @@ class HttpTransport(Transport):
     def make_put_header(self, content_type="application/json",
                               links=[],     # These are safe. Why? Because I'm
                               indexes=[],   # not modifying them in the function
-                              metadata={},  # If you do, you should change this.
+                              usermeta={},  # If you do, you should change this.
                               vclock=None):
         """Creates a header for put. This is done so that the function arguments
         for put is not too crazy, and it also gives you a chance to manipulate
@@ -49,7 +49,7 @@ class HttpTransport(Transport):
         :param content_type: Content type
         :param links: A list of 3 item tuples for links, consisting of bucket, key, tag
         :param indexes: A list of 2 item tuples for 2i, consisting of field, value
-        :param metadata: A dictionary of metadata
+        :param usermeta: A dictionary of metadata
         :param vclock: Vector clock data.
         :rtype: A dictionary of a fully constructed header.
         """
@@ -62,7 +62,7 @@ class HttpTransport(Transport):
         if vclock:
             headers["X-Riak-Vclock"] = vclock
 
-        for key, value in metadata.iteritems():
+        for key, value in usermeta.iteritems():
             headers["X-Riak-Meta-%s" % key] = value
 
         for field, value in indexes:
@@ -281,8 +281,7 @@ class HttpTransport(Transport):
             else:
                 metadata[header] = value
 
-        if links:
-            metadata["link"] = links
+        metadata["link"] = links
 
         return vclock, metadata, data
 
