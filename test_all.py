@@ -175,9 +175,11 @@ class Riak2HigherAPITest(unittest.TestCase):
         obj.data = {"some_key" : "some_value"}
         obj.store()
         same_obj = bucket.get("foo")
+        obj.delete() # Delete first, so there's no issue next time running if test fails.
+
         self.assertEqual(u"some_value", same_obj.data[u"some_key"])
-        same_obj.delete()
-        obj.reload()
+
+        same_obj.reload()
         self.assertFalse(obj.exists)
         self.assertFalse(same_obj.exists)
 
@@ -185,15 +187,68 @@ class Riak2HigherAPITest(unittest.TestCase):
         bucket = self.client["test_bucket"]
         obj = bucket.new("foo")
         obj.indexes.add("foo_bin", "bar")
-        obj.indexes.add("foo2_int", 2)
+        obj.add_index("foo2_int", 2)
         obj.usermeta["test"] = "value"
         obj.data = {"some_key": "some_value"}
+
         obj.store()
         same_obj = bucket.get("foo")
-        obj.delete()
+
         self.assertEqual("value", same_obj.usermeta["test"])
         self.assertTrue("bar" in same_obj.indexes["foo_bin"])
         self.assertTrue(2 in same_obj.indexes["foo2_int"])
+
+        same_obj.remove_index("foo2_int", 2)
+        same_obj.store()
+        obj.reload()
+        self.assertTrue("foo2_int" not in obj.indexes)
+        obj.remove_index("foo_bin")
+        obj.store()
+        same_obj.reload()
+        self.assertTrue("foo_bin" not in obj.indexes)
+
+    def test_binary_object(self):
+        bucket = self.client["test_bucket"]
+        obj = bucket.new("foo", content_type="application/octet-stream")
+        obj.data = "hello world"
+        obj.store()
+        same_obj = bucket.get("foo")
+        obj.delete()
+
+        self.assertEqual("hello world", same_obj.data)
+
+    def test_object_with_links(self):
+        bucket = self.client["test_bucket"]
+        foo = bucket.new("foo", content_type="text/plain")
+        bar = bucket.new("bar", content_type="text/plain")
+        foo.data = "I'm foo!"
+        bar.data = "I'm bar!"
+        foo.add_link(bar, "cool_tag")
+        foo.add_link(riak2.Link("test_bucket", "bar", "cool_tag2"))
+
+        self.assertEqual(2, len(foo.links))
+        foo.store()
+        bar.store()
+        same_foo = bucket.get("foo")
+
+        self.assertEqual(2, len(same_foo.links))
+        self.assertTrue(riak2.Link("test_bucket", "bar", "cool_tag") in same_foo.links)
+        self.assertTrue(riak2.Link("test_bucket", "bar", "cool_tag2") in same_foo.links)
+
+        foo.remove_link(bar, "cool_tag2")
+        self.assertEqual(1, len(foo.links))
+        foo.add_link(riak2.Link("test_bucket", "bar", "cool_tag2"))
+        foo.remove_link(bar)
+        self.assertEqual(0, len(foo.links))
+        foo.store()
+        same_foo.reload()
+        self.assertEqual(0, len(same_foo.links))
+        foo.delete()
+        bar.delete()
+
+
+
+
 
 
 

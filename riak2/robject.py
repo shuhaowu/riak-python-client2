@@ -204,27 +204,38 @@ class RObject(object):
     def set_links(self, links, use_copy=True):
         return self._set_things("links", links, use_copy)
 
-    def _construct_link(self, obj):
+    def _construct_link(self, obj, tag):
         if isinstance(obj, RObject):
             link = Link(obj.bucket.name, obj.key, tag)
         elif isinstance(obj, tuple) and len(obj) == 3:
             link = obj
         else:
             raise TypeError("Not sure how to add link of %s" % repr(obj))
+        if not link[0] or link[1] is None:
+            raise ValueError("Link's key and bucket must be filled out!")
         return link
 
     def add_link(self, obj, tag=None):
         self._assert_no_conflict()
-        link = self._construct_link(obj)
+        link = self._construct_link(obj, tag)
         sibling = self._get_only_sibling()
         sibling.links.append(link)
         return self
 
     def remove_link(self, obj, tag=None): # This shit.. it's inefficient.
         self._assert_no_conflict()
-        link = self._construct_link(obj)
         sibling = self._get_only_sibling()
-        sibling.links.remove(link)
+        link = self._construct_link(obj, tag)
+
+        if tag is None:
+            new_links = []
+            for l in sibling.links:
+                if l[0] != link[0] or l[1] != link[1]:
+                    new_links.append(l)
+            sibling.links = new_links
+        else:
+            sibling.links.remove(link)
+
         return self
 
     def get_vclock(self):
@@ -239,7 +250,7 @@ class RObject(object):
 
     def _load_with_response(self, response):
         if response is None:
-            self.exists = False
+            self.clear()
         else:
             siblings = self.siblings = {}
             if isinstance(response, list):
@@ -277,7 +288,7 @@ class RObject(object):
         self._assert_no_conflict()
         w = w or self.bucket.w
         dw = dw or self.bucket.dw
-        meta = self.get_metadata()
+        meta = {}
         meta["links"] = self.get_links()
         indexes = []
         for field, values in self.indexes.iteritems():
@@ -285,6 +296,7 @@ class RObject(object):
                 indexes.append(Index(field, value))
         meta["indexes"] = indexes
         meta["usermeta"] = self.get_usermeta()
+        meta["content_type"] = self.content_type
         data = self.get_encoded_data()
         response = self.client.transport.put(self.bucket.name, self.key, data, meta, w, dw)
         if self.key is None:
@@ -294,6 +306,8 @@ class RObject(object):
             self._load_with_response(response)
         self.exists = True
         return self
+
+    save = store
 
     def delete(self, rw=None):
         rw = rw or self.bucket.rw
