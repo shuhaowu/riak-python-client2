@@ -16,6 +16,7 @@
 
 from core import HttpTransport, ConnectionManager
 from bucket import Bucket
+from weakref import WeakValueDictionary
 
 class Client(object):
     """This is a higher level abstraction for the Transport classes.
@@ -46,6 +47,8 @@ class Client(object):
         self.decoders = {"application/json": json.loads,
                          "text/json": json.loads}
 
+        self._buckets = WeakValueDictionary()
+
     def get_buckets(self):
         """Get all the buckets. Not recommended for production use.
 
@@ -61,4 +64,11 @@ class Client(object):
         return self.transport.ping()
 
     def bucket(self, name):
-        return Bucket(self, name)
+        if name in self._buckets:
+            return self._buckets[name]
+
+        b = Bucket(self, name)
+        self._buckets[name] = b
+        return b
+
+    __getitem__ = bucket

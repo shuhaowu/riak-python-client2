@@ -18,16 +18,14 @@
 # under the License.
 
 from copy import copy
+from utils import doNothing
+from robject import RObject
+from weakref import WeakValueDictionary
 
 class Bucket(object):
     # SEARCH_PRECOMMIT_HOOK = {"mod": "riak_search_kv_hook", "fun": "precommit"}
     def __init__(self, client, name):
-        try:
-            if isinstance(name, basestring):
-                name = name.encode('ascii')
-        except UnicodeError:
-            raise TypeError('Unicode bucket names are not supported.')
-
+        name = self._ensure_ascii(name)
         self.client = client
         self.transport = client.transport
         self.name = name
@@ -38,4 +36,26 @@ class Bucket(object):
         self.encoders = copy(client.encoders)
         self.decoders = copy(client.decoders)
 
+    def _ensure_ascii(self, data):
+        try:
+            if isinstance(data, basestring):
+                data = data.encode('ascii')
+        except UnicodeError:
+            raise TypeError('Unicode data values are not supported.')
+
+        return data
+
+    def new(self, key, data=None,
+            content_type="application/json",
+            conflict_handler=doNothing):
+        data = self._ensure_ascii(data)
+        obj = RObject(self.client, self, key, conflict_handler)
+        obj.data = data
+        obj.content_type = content_type
+
+        return obj
+
+    def get(self, key, r=None, conflict_handler=doNothing):
+        obj = RObject(self.client, self, key, conflict_handler)
+        return obj.reload(r or self.r)
 

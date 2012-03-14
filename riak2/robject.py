@@ -48,7 +48,7 @@ class Sibling(object):
 
 
 class RObject(object):
-    def __init__(self, client, bucket, conflict_handler=doNothing, key=None):
+    def __init__(self, client, bucket, key=None, conflict_handler=doNothing):
         try:
             if isinstance(key, basestring): # TEMP FIX. See basho/riak-python-client#32
                 key = key.encode('ascii')
