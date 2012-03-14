@@ -16,11 +16,17 @@
 
 doNothing = lambda x: x
 
+# simulate class
+def Link(bucket_name, key=None, tag=None):
+    return (bucket_name, key, tag if tag else bucket_name)
+
+def Index(field, value):
+    return (field, value)
+
 class MultiDict(dict):
     def __setitem__(self, key, value):
-        if not isinstance(value, list):
-            raise TypeError("MultiDict values must be lists!")
-        dict.__setitem__(self, key, value)
+        dict.__setitem__(self, key, set(value))
 
     def add(self, key, value):
-        self.setdefault(key, []).append(value)
+        self.setdefault(key, set()).add(value)
+

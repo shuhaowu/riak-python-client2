@@ -70,7 +70,16 @@ class RObject(object):
             "metadata": lambda: self.get_metadata(False),
             "usermeta": lambda: self.get_usermeta(False),
             "indexes": lambda: self.get_indexes(None, False),
-            "links": lambda: self.get_links(None, False),
+            "links": lambda: self.get_links(False),
+        }
+
+        self._setattr_mapper = {
+            "data": lambda value: self.set_data(value, False),
+            "content_type": self.set_content_type
+            "metadata": lambda value: self.set_metadata(value, False),
+            "usermeta": lambda value: self.set_usermeta(value, False),
+            "indexes": lambda value: self.set_indexes(value), # This always uses copy
+            "links": lambda value: self.set_links(value, False)
         }
 
 
@@ -104,6 +113,12 @@ class RObject(object):
         if callback is None:
             raise AttributeError("%s doesn't exist!" % name)
         return callback()
+
+    def __setattr__(self, name, value):
+        callback = self._setattr_mapper.get(name, None)
+        if callback is None:
+            raise AttributeError("%s doesn't exist!" % name)
+        return callback(value)
 
     def get_data(self, return_copy=True):
         return self._get_things("data", return_copy)
@@ -155,6 +170,52 @@ class RObject(object):
                 indexes = deepcopy(indexes)
 
             self._get_only_sibling().indexes[field] = indexes
+        return self
+
+    def add_index(self, field, value):
+        self._assert_no_conflict()
+        self._get_only_sibling().indexes.add(field, value)
+        return self
+
+    def remove_index(self, field, value=None):
+        self._assert_no_conflict()
+        sibling = self._get_only_sibling()
+        if value is None:
+            if field in sibling.indexes:
+                del sibling.indexes[field]
+        else:
+            if field in sibling.indexes:
+                sibling.indexes[field].discard(value)
+        return self
+
+    def get_links(self, tags=None, return_copy=True):
+        return self._get_things("links", return_copy)
+
+    def set_links(self, links, use_copy=True):
+        return self._set_things("links", links, use_copy)
+
+    def _construct_link(self, obj):
+        if isinstance(obj, RObject):
+            link = Link(obj.bucket.name, obj.key, tag)
+        elif isinstance(obj, tuple) and len(obj) == 3:
+            link = obj
+        else:
+            raise TypeError("Not sure how to add link of %s" % repr(obj))
+        return link
+
+    def add_link(self, obj, tag=None):
+        self._assert_no_conflict()
+        link = self._construct_link(obj)
+        sibling = self._get_only_sibling()
+        sibling.links.append(link)
+        return self
+
+    def remove_link(self, obj, tag=None): # This shit.. it's inefficient.
+        self._assert_no_conflict()
+        link = self._construct_link(obj)
+        sibling = self._get_only_sibling()
+        sibling.links.remove(link)
+        return self
 
     def reload(self, r=None, vtag=None):
         response = self.client.transport.get(self.bucket.name, self.key,
@@ -191,4 +252,13 @@ class RObject(object):
     def on_conflict(self, func):
         self._conflict_handler = func
         return self
+
+    def clear(self):
+        pass
+
+    def store(self, w=None, dw=None, return_body=True):
+        pass
+
+    def delete(self, rw=None):
+        pass
 
