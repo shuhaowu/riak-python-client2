@@ -1,4 +1,5 @@
 from riak2.core import HttpTransport
+import riak2
 import unittest
 
 class Riak2CoreHttpTransportTest(unittest.TestCase):
@@ -151,6 +152,17 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
         self.assertEqual(2, result[0][u"1"])
         self.transport.delete("test_bucket", "foo")
 
+class Riak2HigherAPITest(unittest.TestCase):
+    def setUp(self):
+        self.client = riak2.Client()
+
+    def test_alive(self):
+        self.assertTrue(self.client.is_alive())
+
+    def test_getbucket(self):
+        bucket = self.client.bucket("test_bucket")
+        bucket2 = self.client["test_bucket"]
+        self.assertTrue(bucket is bucket2)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

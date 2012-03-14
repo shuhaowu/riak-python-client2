@@ -17,6 +17,7 @@
 from core import HttpTransport, ConnectionManager
 from bucket import Bucket
 from weakref import WeakValueDictionary
+import json
 
 class Client(object):
     """This is a higher level abstraction for the Transport classes.
@@ -27,7 +28,16 @@ class Client(object):
     def __init__(self, host="127.0.0.1", port=8098, mapred_prefix="mapred",
                        transport_class=HttpTransport, connection_manager=None,
                        client_id=None):
+        """Construct a new instance of a client
 
+        :param host: The host IP.
+        :param port: The host port.
+        :param mapred_prefix: URL prefix for map reduce
+        :param transport_class: The transport class to be used. Defaults to HTTP
+        :param connection_manager: The connection manager instance to be used,
+                                   default to a http connection manager
+        :param client_id: A client id, default to a random client id.
+        """
         if connection_manager is None:
             connection_manager = ConnectionManager.get_http_cm(host, port)
 
@@ -64,6 +74,14 @@ class Client(object):
         return self.transport.ping()
 
     def bucket(self, name):
+        """Gets a bucket object.
+
+        Using client[name] is the same as this function.
+
+        :param name: The bucket name
+        :type name: string
+        :rtype: Bucket object
+        """
         if name in self._buckets:
             return self._buckets[name]
 

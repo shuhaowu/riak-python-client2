@@ -75,7 +75,7 @@ class RObject(object):
 
         self._setattr_mapper = {
             "data": lambda value: self.set_data(value, False),
-            "content_type": self.set_content_type
+            "content_type": self.set_content_type,
             "metadata": lambda value: self.set_metadata(value, False),
             "usermeta": lambda value: self.set_usermeta(value, False),
             "indexes": lambda value: self.set_indexes(value), # This always uses copy
