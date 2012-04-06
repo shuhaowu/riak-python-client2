@@ -22,13 +22,11 @@ import socket
 class NoHostsDefined(Exception): pass
 
 class ConnectionManager(object):
-    _http_manager_instance = None
 
     @classmethod
     def get_http_cm(cls, host="localhost", port=8098):
-        if cls._http_manager_instance is None:
-            cls._http_manager_instance = cls(httplib.HTTPConnection, [(host, port)])
-        return cls._http_manager_instance
+        """Don't use this.'"""
+        return cls(httplib.HTTPConnection, [(host, port)])
 
     def __init__(self, connection_class, hostports=[]):
         self.connection_class = connection_class

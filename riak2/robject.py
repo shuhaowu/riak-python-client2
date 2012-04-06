@@ -89,7 +89,6 @@ class RObject(object):
             "links": lambda value: self.set_links(value, False)
         }
 
-
     def _assert_no_conflict(self):
         if len(self.siblings) > 1:
             raise ConflictError("Multiple siblings found for %s!" % self.key)

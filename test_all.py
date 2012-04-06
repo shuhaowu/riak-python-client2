@@ -246,11 +246,5 @@ class Riak2HigherAPITest(unittest.TestCase):
         foo.delete()
         bar.delete()
 
-
-
-
-
-
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

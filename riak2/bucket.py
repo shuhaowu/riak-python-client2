@@ -81,3 +81,13 @@ class Bucket(object):
         """
         obj = RObject(self.client, self, key, conflict_handler)
         return obj.reload(r or self.r)
+
+    def set_properties(self, **props):
+        self.transport.set_bucket_properties(self.name, props)
+
+    def get_properties(self):
+        return self.transport.get_bucket_properties(self.name)
+
+    def get_keys(self):
+        return self.transport.get_keys(self.name)
+

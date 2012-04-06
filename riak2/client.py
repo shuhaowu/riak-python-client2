@@ -18,6 +18,8 @@ from core import HttpTransport, ConnectionManager
 from bucket import Bucket
 from weakref import WeakValueDictionary
 import json
+import httplib
+
 
 class Client(object):
     """This is a higher level abstraction for the Transport classes.
@@ -38,8 +40,10 @@ class Client(object):
                                    default to a http connection manager
         :param client_id: A client id, default to a random client id.
         """
+
+
         if connection_manager is None:
-            connection_manager = ConnectionManager.get_http_cm(host, port)
+            connection_manager = ConnectionManager(httplib.HTTPConnection, [(host, port)])
 
         self.connection_manager = connection_manager
         self.transport = transport_class(connection_manager,
