@@ -17,6 +17,7 @@
 from core import HttpTransport, ConnectionManager
 from bucket import Bucket
 from weakref import WeakValueDictionary
+from mapreduce import MapReduce
 import json
 import httplib
 
@@ -92,5 +93,8 @@ class Client(object):
         b = Bucket(self, name)
         self._buckets[name] = b
         return b
+
+    def add(self, a, key=None, data=None):
+        return MapReduce(self).add(a, key, data)
 
     __getitem__ = bucket

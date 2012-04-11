@@ -246,5 +246,27 @@ class Riak2HigherAPITest(unittest.TestCase):
         foo.delete()
         bar.delete()
 
+    def test_mapreduce(self):
+        bucket = self.client["test_bucket"]
+
+        foo = bucket.new("foo", 2).store()
+        bar = bucket.new("bar", 3).store()
+        baz = bucket.new("baz", 4).store()
+
+        # Run the map...
+        result = self.client \
+            .add("bucket", "foo") \
+            .add("bucket", "bar") \
+            .add("bucket", "baz") \
+            .map("function (v) { return [1]; }") \
+            .reduce("Riak.reduceSum") \
+            .run()
+
+        self.assertEqual(result, [3])
+
+        foo.delete()
+        bar.delete()
+        baz.delete()
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

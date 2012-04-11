@@ -14,6 +14,6 @@
 # specific language governing permissions and limitations
 # under the License.
 
-
-class ConflictError(Exception): pass
-class NotFoundError(Exception): pass
+class Riak2Error(Exception): pass
+class ConflictError(Riak2Error): pass
+class NotFoundError(Riak2Error): pass
