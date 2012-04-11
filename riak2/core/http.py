@@ -27,6 +27,8 @@ import re
 import json
 import socket
 from httplib import HTTPException
+from xml.dom.minidom import Document
+from xml.etree import ElementTree
 
 # This module is designed to function independently of the entire library.
 # For easier intergration.
@@ -186,6 +188,49 @@ class HttpTransport(Transport):
         response = self._request("POST", url, {}, content)
         self._assert_http_code(response, 200)
         return json.loads(response[1])
+
+    def search_add_index(self, index, docs):
+        xml = Document()
+        root = xml.createElement("add")
+        for doc in docs:
+            doc_element = xml.createElement("doc")
+            for key, value in doc.iteritems():
+                field = xml.createElement("field")
+                field.setAttribute("name", key)
+                field.appendChild(xml.createTextNode(value))
+                doc_element.appendChild(field)
+            root.appendChild(doc_element)
+        xml.appendChild(root)
+
+        url = "/solr/%s/update" % index
+        self._request("POST", url, {"Content-Type": "text/xml"}, xml.toxml())
+
+    def search_delete_index(self, index, docs=None, queries=None):
+        xml = Document()
+        root = xml.createElement("delete")
+        if docs:
+            for doc in docs:
+                doc_element = xml.createElement("id")
+                doc_element.appendChild(xml.createTextNode(doc))
+                root.appendChild(doc_element)
+
+        if queries:
+            for query in queries:
+                query_element = xml.createElement("query")
+                query_element.appendChild(xml.createTextNode(query))
+                root.appendChild(doc_element)
+
+        xml.appendChild(root)
+        url = "/solr/%s/update" % index
+        self._request("POST", url, {"Content-Type": "text/xml"}, xml.toxml())
+
+    def search(self, index, query, params):
+        options = {'q': query, 'wt': 'json'}
+        options.update(params)
+        url = "/solr/%s/select" % index
+
+        headers, response = self._request("GET", url, options)
+        return headers["content-type"], response
 
     def _build_rest_path(self, bucket=None, key=None, params=None, prefix=None):
         # Build "http://hostname:port/prefix/bucket"

@@ -91,3 +91,9 @@ class Bucket(object):
     def get_keys(self):
         return self.transport.get_keys(self.name)
 
+    def index(self, field, startkey, endkey=None):
+        return self.transport.index(self.name, field, startkey, endkey)
+
+    def search(self, bucket, query):
+        raise NotImplementedError
+

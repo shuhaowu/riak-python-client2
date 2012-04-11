@@ -176,6 +176,31 @@ class Transport(object):
         """
         raise NotImplementedError
 
-    def search(self):
-        """API to be designed"""
+    def search_add_index(self, index, docs):
+        """Add index to a Riak Search cluster. Only works under HTTP.
+
+        :param index: The index name
+        :type index: string
+        :param docs: A list of documents to be indexed by Riak Search
+        :type docs: A list of dictionary containing the documents.
+                    Dictionary must include id.
+        """
+        raise NotImplementedError
+
+    def search_delete_index(self, index, docs=None, queries=None):
+        """Delete indexed documents from Riak Search.
+
+        :param index: The index name
+        :param docs: A list of document ids.
+        :param queries: using queries to delete.
+        """
+        raise NotImplementedError
+
+    def search(self, index, query, params):
+        """Perform a query from Riak Search
+
+        :param index: The index name
+        :param query: The query
+        :param params: The parameters on top query.
+        """
         raise NotImplementedError

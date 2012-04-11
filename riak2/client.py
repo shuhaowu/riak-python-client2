@@ -94,6 +94,10 @@ class Client(object):
         self._buckets[name] = b
         return b
 
+    def get_from_link(self, link):
+        bucket = self.bucket(link[0])
+        return bucket.get(link[1])
+
     def add(self, a, key=None, data=None):
         return MapReduce(self).add(a, key, data)
 

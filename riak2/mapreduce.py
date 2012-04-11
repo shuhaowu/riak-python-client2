@@ -153,6 +153,6 @@ class MapReduce(object):
         # results to RiakLink objects.
         a = []
         for r in result:
-            a.append(Link(*r))
+            a.append(self.client.get_from_link(r))
 
         return a
