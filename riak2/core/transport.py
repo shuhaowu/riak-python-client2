@@ -178,6 +178,7 @@ class Transport(object):
 
     def search_add_index(self, index, docs):
         """Add index to a Riak Search cluster. Only works under HTTP.
+        From the solr interface.
 
         :param index: The index name
         :type index: string
@@ -188,7 +189,7 @@ class Transport(object):
         raise NotImplementedError
 
     def search_delete_index(self, index, docs=None, queries=None):
-        """Delete indexed documents from Riak Search.
+        """Delete indexed documents from the solr interface
 
         :param index: The index name
         :param docs: A list of document ids.
@@ -197,7 +198,7 @@ class Transport(object):
         raise NotImplementedError
 
     def search(self, index, query, params):
-        """Perform a query from Riak Search
+        """Perform a query from the solr interface
 
         :param index: The index name
         :param query: The query

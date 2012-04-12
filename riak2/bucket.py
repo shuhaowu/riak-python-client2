@@ -22,7 +22,9 @@ from utils import doNothing
 from robject import RObject
 
 class Bucket(object):
-    # SEARCH_PRECOMMIT_HOOK = {"mod": "riak_search_kv_hook", "fun": "precommit"}
+
+    SEARCH_PRECOMMIT_HOOK = {"mod": "riak_search_kv_hook", "fun": "precommit"}
+
     def __init__(self, client, name):
         """Construct a new bucket instance. You could also just use client[name]
 
@@ -88,12 +90,43 @@ class Bucket(object):
     def get_properties(self):
         return self.transport.get_bucket_properties(self.name)
 
+    def get_property(self, name):
+        return self.get_properties().get(key, None)
+
     def get_keys(self):
         return self.transport.get_keys(self.name)
 
     def index(self, field, startkey, endkey=None):
         return self.transport.index(self.name, field, startkey, endkey)
 
-    def search(self, bucket, query):
-        raise NotImplementedError
+    def search(self, query):
+        return MapReduce(self.client).search(self.name, query)
+
+    def search_enabled(self):
+        """
+        Returns True if the search precommit hook is enabled for this bucket.
+        """
+        return self.SEARCH_PRECOMMIT_HOOK in (self.get_property("precommit") or [])
+
+    def enable_search(self):
+        """
+        Enable search for this bucket by installing the precommit hook to
+        index objects in it.
+        """
+        precommit_hooks = self.get_property("precommit") or []
+        if self.SEARCH_PRECOMMIT_HOOK not in precommit_hooks:
+            self.set_properties({"precommit":
+                precommit_hooks + [self.SEARCH_PRECOMMIT_HOOK]})
+        return True
+
+    def disable_search(self):
+        """
+        Disable search for this bucket by removing the precommit hook to
+        index objects in it.
+        """
+        precommit_hooks = self.get_property("precommit") or []
+        if self.SEARCH_PRECOMMIT_HOOK in precommit_hooks:
+            precommit_hooks.remove(self.SEARCH_PRECOMMIT_HOOK)
+            self.set_properties({"precommit": precommit_hooks})
+        return True
 

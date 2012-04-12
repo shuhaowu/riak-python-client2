@@ -33,11 +33,11 @@ class MapReduce(object):
         self._query = []
         self._inputs = []
         self._key_filters = []
-        self._bucket_mode = False
+        self._input_mode = None
         self._keep_flag = False
 
     def _add_input(self, bucket, key, data):
-        if self._bucket_mode:
+        if self._input_mode in ("bucket", "query"):
             raise Riak2Error("A bucket or a query has already been added.")
         self._inputs.append([bucket, key, data])
         return self
@@ -47,7 +47,7 @@ class MapReduce(object):
             if isinstance(a, RObject):
                 self._add_input(a.bucket.name, a.key, None)
             else:
-                self._bucket_mode = True
+                self._input_mode = "bucket"
                 self._inputs = a
         else:
             self._add_input(a, key, data)
@@ -55,6 +55,8 @@ class MapReduce(object):
         return self
 
     def add_key_filters(self, filters):
+        if self._input_mode == "query":
+            raise Riak2Error("Key filters cannot be used under query mode.")
         self._key_filters.extend(filters)
         return self
 
@@ -112,6 +114,15 @@ class MapReduce(object):
 
     def reduce(self, function, options=None):
         return self._mapreduce("reduce", function, options)
+
+    def search(self, bucket, query):
+        self._input_mode = "query"
+        self._inputs = {
+                        "module": "riak_search",
+                        "function": "mapred_search",
+                        "arg": [bucket, query]
+                       }
+        return self
 
     def run(self, timeout=None):
         num_phases = len(self._query)
