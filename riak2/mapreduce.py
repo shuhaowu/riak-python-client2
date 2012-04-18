@@ -150,8 +150,9 @@ class MapReduce(object):
                                 "key_filters": self._key_filters
                                }
 
-        # If the last phase is NOT a link phase, then return the result.
         result = self.transport.mapreduce(self._inputs, self._query, timeout)
+
+        # If the last phase is NOT a link phase, then return the result.
         link_results_flag = link_results_flag or self._query[-1].keys()[0] == "link"
         if not link_results_flag:
             return result

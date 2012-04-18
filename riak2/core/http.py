@@ -276,7 +276,7 @@ class HttpTransport(Transport):
                     continue
 
         # Raise the last error
-        raise e or ConnectionError("Some strange error has occured")
+        raise e or ConnectionError("Some strange error has occured.")
 
     def _assert_http_code_is_not(self, response, *unexpected_status):
         status = response[0]["http_code"]

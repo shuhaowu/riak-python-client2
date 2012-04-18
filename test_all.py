@@ -268,5 +268,25 @@ class Riak2HigherAPITest(unittest.TestCase):
         bar.delete()
         baz.delete()
 
+    def test_mapreduce_search(self):
+        bucket = self.client["search_bucket"]
+        foo = bucket.new("foo", {"u": 2}).store()
+        bar = bucket.new("bar", {"u": 3}).store()
+        baz = bucket.new("baz", {"u": 6}).store()
+
+        bucket.enable_search()
+        results = bucket.search("u:[2 TO 4]").run()
+        keys = [o.key for o in results]
+        self.assertEqual(2, len(keys))
+        self.assertTrue("foo" in keys)
+        self.assertTrue("bar" in keys)
+        self.assertFalse("baz" in keys)
+
+        foo.delete()
+        bar.delete()
+        baz.delete()
+
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

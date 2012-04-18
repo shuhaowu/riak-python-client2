@@ -91,7 +91,7 @@ class Bucket(object):
         return self.transport.get_bucket_properties(self.name)
 
     def get_property(self, name):
-        return self.get_properties().get(key, None)
+        return self.get_properties().get(name, None)
 
     def get_keys(self):
         return self.transport.get_keys(self.name)
@@ -130,3 +130,4 @@ class Bucket(object):
             self.set_properties({"precommit": precommit_hooks})
         return True
 
+from mapreduce import MapReduce
