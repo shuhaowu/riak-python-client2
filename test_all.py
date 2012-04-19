@@ -1,11 +1,8 @@
-from riak2.core import HttpTransport
+from riak2.core import HttpTransport, PbcTransport
 import riak2
 import unittest
 
-class Riak2CoreHttpTransportTest(unittest.TestCase):
-    def setUp(self):
-        self.transport = HttpTransport()
-
+class Riak2CoreTransportTest(object):
     def test_ping(self):
         self.assertTrue(self.transport.ping())
 
@@ -161,6 +158,14 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
 
         # TODO: why is doc[u"fields"][u"value"] u"2" rather than just 2 as an int?
         self.transport.delete("search_bucket", "foo")
+
+class Riak2HttpTransportTest(Riak2CoreTransportTest, unittest.TestCase):
+    def setUp(self):
+        self.transport = HttpTransport()
+
+#class Riak2PbcTransportTest(Riak2CoreTransportTest, unittest.TestCase):
+#    def setUp(self):
+#        self.transport = PbcTransport()
 
 class Riak2HigherAPITest(unittest.TestCase):
     def setUp(self):

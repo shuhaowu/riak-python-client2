@@ -101,4 +101,20 @@ class Client(object):
     def add(self, a, key=None, data=None):
         return MapReduce(self).add(a, key, data)
 
+    def solr_search(self, index, query, **params):
+        """Takes a query and parameters for solr interface search query.
+
+        :param index: The index to look into.
+        :param query: The solr search query
+        :param params: Any other parameters to throw to the solr search interface
+        :rtype: The response. This is a shortcut to Transport.solr.search
+        """
+        return self.transport.solr.search(index, query, params)
+
+    def solr_add_index(self, index, docs):
+        self.transport.solr.add_index(index, docs)
+
+    def solr_delete_index(self, index, docs=None, queries=None):
+        self.transport.solr.delete_index(index, docs, queries)
+
     __getitem__ = bucket
