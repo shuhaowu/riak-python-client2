@@ -21,7 +21,7 @@ from exceptions import ConnectionError, RiakError
 from transport import Transport
 from connection import ConnectionManager
 import errno
-from urllib import quote_plus
+from urllib import quote_plus, urlencode
 import csv
 import re
 import json
@@ -38,6 +38,52 @@ from xml.etree import ElementTree
 class HttpTransport(Transport):
     api = 2
     RETRY_COUNT = 3
+
+    class HttpSolrTransport(Transport.SolrTransport):
+        def __init__(self, client):
+            self.client = client
+
+        def add_index(self, index, docs):
+            xml = Document()
+            root = xml.createElement("add")
+            for doc in docs:
+                doc_element = xml.createElement("doc")
+                for key, value in doc.iteritems():
+                    field = xml.createElement("field")
+                    field.setAttribute("name", key)
+                    field.appendChild(xml.createTextNode(value))
+                    doc_element.appendChild(field)
+                root.appendChild(doc_element)
+            xml.appendChild(root)
+
+            url = "/solr/%s/update" % index
+            self.client._request("POST", url, {"Content-Type": "text/xml"}, xml.toxml())
+
+        def delete_index(self, index, docs=None, queries=None):
+            xml = Document()
+            root = xml.createElement("delete")
+            if docs:
+                for doc in docs:
+                    doc_element = xml.createElement("id")
+                    doc_element.appendChild(xml.createTextNode(doc))
+                    root.appendChild(doc_element)
+
+            if queries:
+                for query in queries:
+                    query_element = xml.createElement("query")
+                    query_element.appendChild(xml.createTextNode(query))
+                    root.appendChild(doc_element)
+
+            xml.appendChild(root)
+            url = "/solr/%s/update" % index
+            self.client._request("POST", url, {"Content-Type": "text/xml"}, xml.toxml())
+
+        def search(self, index, query, params={}):
+            options = {'q': query, 'wt': 'json'}
+            options.update(params)
+            url = "/solr/%s/select" % index + "?" + urlencode(options)
+            headers, response = self.client._request("GET", url)
+            return json.loads(response)
 
     def make_put_header(self, content_type="application/json",
                               links=[],     # These are safe. Why? Because I'm
@@ -90,6 +136,8 @@ class HttpTransport(Transport):
         self._connections = cm
         self._prefix = prefix
         self._mapred_prefix = mapred_prefix
+
+        self.solr = self.HttpSolrTransport(self)
 
         self.client_id = client_id or self.random_client_id()
 
@@ -188,49 +236,6 @@ class HttpTransport(Transport):
         response = self._request("POST", url, {}, content)
         self._assert_http_code(response, 200)
         return json.loads(response[1])
-
-    def search_add_index(self, index, docs):
-        xml = Document()
-        root = xml.createElement("add")
-        for doc in docs:
-            doc_element = xml.createElement("doc")
-            for key, value in doc.iteritems():
-                field = xml.createElement("field")
-                field.setAttribute("name", key)
-                field.appendChild(xml.createTextNode(value))
-                doc_element.appendChild(field)
-            root.appendChild(doc_element)
-        xml.appendChild(root)
-
-        url = "/solr/%s/update" % index
-        self._request("POST", url, {"Content-Type": "text/xml"}, xml.toxml())
-
-    def search_delete_index(self, index, docs=None, queries=None):
-        xml = Document()
-        root = xml.createElement("delete")
-        if docs:
-            for doc in docs:
-                doc_element = xml.createElement("id")
-                doc_element.appendChild(xml.createTextNode(doc))
-                root.appendChild(doc_element)
-
-        if queries:
-            for query in queries:
-                query_element = xml.createElement("query")
-                query_element.appendChild(xml.createTextNode(query))
-                root.appendChild(doc_element)
-
-        xml.appendChild(root)
-        url = "/solr/%s/update" % index
-        self._request("POST", url, {"Content-Type": "text/xml"}, xml.toxml())
-
-    def search(self, index, query, params):
-        options = {'q': query, 'wt': 'json'}
-        options.update(params)
-        url = "/solr/%s/select" % index
-
-        headers, response = self._request("GET", url, options)
-        return headers["content-type"], response
 
     def _build_rest_path(self, bucket=None, key=None, params=None, prefix=None):
         # Build "http://hostname:port/prefix/bucket"

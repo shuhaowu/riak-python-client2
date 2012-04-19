@@ -176,32 +176,33 @@ class Transport(object):
         """
         raise NotImplementedError
 
-    def search_add_index(self, index, docs):
-        """Add index to a Riak Search cluster. Only works under HTTP.
-        From the solr interface.
+    class SolrTransport(object):
+        def add_index(self, index, docs):
+            """Add index to a Riak Search cluster. Only works under HTTP.
+            From the solr interface.
 
-        :param index: The index name
-        :type index: string
-        :param docs: A list of documents to be indexed by Riak Search
-        :type docs: A list of dictionary containing the documents.
-                    Dictionary must include id.
-        """
-        raise NotImplementedError
+            :param index: The index name
+            :type index: string
+            :param docs: A list of documents to be indexed by Riak Search
+            :type docs: A list of dictionary containing the documents. (dict)
+                        Dictionary must include id.
+            """
+            raise NotImplementedError
 
-    def search_delete_index(self, index, docs=None, queries=None):
-        """Delete indexed documents from the solr interface
+        def delete_index(self, index, docs=None, queries=None):
+            """Delete indexed documents from the solr interface
 
-        :param index: The index name
-        :param docs: A list of document ids.
-        :param queries: using queries to delete.
-        """
-        raise NotImplementedError
+            :param index: The index name
+            :param docs: A list of document ids.
+            :param queries: using queries to delete.
+            """
+            raise NotImplementedError
 
-    def search(self, index, query, params):
-        """Perform a query from the solr interface
+        def search(self, index, query, params={}): # should be okay. params should not be modified
+            """Perform a query from the solr interface
 
-        :param index: The index name
-        :param query: The query
-        :param params: The parameters on top query.
-        """
-        raise NotImplementedError
+            :param index: The index name
+            :param query: The query
+            :param params: The parameters on top query.
+            """
+            raise NotImplementedError

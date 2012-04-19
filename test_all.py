@@ -146,11 +146,21 @@ class Riak2CoreHttpTransportTest(unittest.TestCase):
         self.transport.delete("test_bucket", "foo")
 
     def test_mapreduce(self):
-        self.transport.put("test_bucket", "foo", "{1 : 2}", {})
+        self.transport.put("test_bucket", "foo", "{1 : 2}", {"content_type": "application/json"})
         result = self.transport.mapreduce("test_bucket", [{"map":{"language": "javascript", "name": "Riak.mapValuesJson"}}])
         self.assertEqual(1, len(result))
         self.assertEqual(2, result[0][u"1"])
         self.transport.delete("test_bucket", "foo")
+
+    def test_solr_simple_search(self):
+        self.transport.put("search_bucket", "foo", '{"value" : 2}', {"content_type": "application/json"})
+        results = self.transport.solr.search("search_bucket", "value:2")
+        self.assertEqual(1, results["response"]["numFound"])
+        doc = results["response"]["docs"][0]
+        self.assertEqual(u"foo", doc["id"])
+
+        # TODO: why is doc[u"fields"][u"value"] u"2" rather than just 2 as an int?
+        self.transport.delete("search_bucket", "foo")
 
 class Riak2HigherAPITest(unittest.TestCase):
     def setUp(self):
@@ -246,6 +256,12 @@ class Riak2HigherAPITest(unittest.TestCase):
         foo.delete()
         bar.delete()
 
+    def test_delete_nonexisting(self):
+        bucket = self.client["test_bucket"]
+        foo = bucket.new("foo", {"value" : 2}).store()
+        foo.delete()
+        bucket.get("foo").delete()
+
     def test_mapreduce(self):
         bucket = self.client["test_bucket"]
 
@@ -286,6 +302,13 @@ class Riak2HigherAPITest(unittest.TestCase):
         bar.delete()
         baz.delete()
 
+    def test_solr_simple_search(self):
+        bucket = self.client["search_bucket"]
+        foo = bucket.new("foo", {"value" : "2"}).store()
+        results = bucket.solr_search("value:2")
+        self.assertEqual(1, len(results))
+        self.assertEqual("foo", results[0].key)
+        foo.delete()
 
 
 if __name__ == "__main__":

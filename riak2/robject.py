@@ -278,7 +278,6 @@ class RObject(object):
         return self
 
     def clear(self):
-        self.key = None
         self.siblings = {}
         self.exists = False
         return self

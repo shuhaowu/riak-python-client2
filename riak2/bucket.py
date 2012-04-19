@@ -102,6 +102,17 @@ class Bucket(object):
     def search(self, query):
         return MapReduce(self.client).search(self.name, query)
 
+    def solr_search(self, query, **params):
+        """Takes a query and parameters for solr interface search query.
+
+        :param query: The solr search query
+        :param params: Any other parameters to throw to the solr search interface
+        :rtype: A list of RObject
+        """
+        results = self.transport.solr.search(self.name, query, params)
+        docs = [self.get(doc[u"id"]) for doc in results[u"response"][u"docs"]]
+        return docs
+
     def search_enabled(self):
         """
         Returns True if the search precommit hook is enabled for this bucket.
