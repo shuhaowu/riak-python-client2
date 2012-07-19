@@ -51,10 +51,10 @@ class Client(object):
                                          mapred_prefix=mapred_prefix,
                                          client_id=client_id)
 
-        self.r = "default"
-        self.w = "default"
-        self.dw = "default"
-        self.rw = "default"
+        self.r = "quorum"
+        self.w = "quorum"
+        self.dw = "quorum"
+        self.rw = "quorum"
         self.client_id = self.transport.client_id
         self.encoders = {"application/json": json.dumps,
                          "text/json": json.dumps}
