@@ -32,15 +32,33 @@ class Bucket(object):
         :param name: Bucket name. Make sure it doesn't have unicode. Issue #32
         """
         name = self._ensure_ascii(name)
+
+        self.__dict__["quorums"] = {
+            "r" : client.r,
+            "w" : client.w,
+            "dw" : client.dw,
+            "rw" : client.rw
+        }
+
         self.client = client
         self.transport = client.transport
         self.name = name
-        self.r = client.r
-        self.w = client.w
-        self.dw = client.dw
-        self.rw = client.rw
+
         self.encoders = copy(client.encoders)
         self.decoders = copy(client.decoders)
+
+    def __setattr__(self, name, value):
+        if name in self.quorums.keys():
+            self.quorums[name] = value
+            self.set_properties(**{name : value})
+        else:
+            self.__dict__[name] = value
+
+    def __getattr__(self, name):
+        try:
+            return self.quorums[name]
+        except KeyError:
+            raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
     def _ensure_ascii(self, data): # temporary fix.
         try:
@@ -126,8 +144,7 @@ class Bucket(object):
         """
         precommit_hooks = self.get_property("precommit") or []
         if self.SEARCH_PRECOMMIT_HOOK not in precommit_hooks:
-            self.set_properties({"precommit":
-                precommit_hooks + [self.SEARCH_PRECOMMIT_HOOK]})
+            self.set_properties(precommit=(precommit_hooks + [self.SEARCH_PRECOMMIT_HOOK]))
         return True
 
     def disable_search(self):

@@ -315,6 +315,13 @@ class Riak2HigherAPITest(unittest.TestCase):
         self.assertEqual("foo", results[0].key)
         foo.delete()
 
+    def test_setquorums(self):
+        bucket = self.client["test_bucket"]
+        self.assertEquals("default", bucket.r)
+        self.assertEquals(2, bucket.get_property("r")) # 2 is default?
+        bucket.r = 3
+        self.assertEquals(3, bucket.get_property("r"))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
