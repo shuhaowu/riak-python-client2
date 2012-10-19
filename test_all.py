@@ -143,7 +143,9 @@ class Riak2CoreTransportTest(object):
         self.transport.delete("test_bucket", "foo")
 
     def test_mapreduce(self):
+
         self.transport.put("test_bucket", "foo", "{1 : 2}", {"content_type": "application/json"})
+
         result = self.transport.mapreduce("test_bucket", [{"map":{"language": "javascript", "name": "Riak.mapValuesJson"}}])
         self.assertEqual(1, len(result))
         self.assertEqual(2, result[0][u"1"])

@@ -17,7 +17,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from exceptions import ConnectionError, RiakError
+from exceptions import ConnectionError
 from transport import Transport
 from connection import ConnectionManager
 import errno
@@ -233,7 +233,7 @@ class HttpTransport(Transport):
             job["timeout"] = timeout
         content = json.dumps(job)
         url = "/" + self._mapred_prefix
-        response = self._request("POST", url, {}, content)
+        response = self._request("POST", url, {"Content-Type" : "application/json"}, content)
         self._assert_http_code(response, 200)
         return json.loads(response[1])
 
