@@ -18,7 +18,7 @@
 # under the License.
 
 from copy import copy
-from utils import doNothing
+from utils import do_nothing
 from robject import RObject
 
 class Bucket(object):
@@ -71,7 +71,7 @@ class Bucket(object):
 
     def new(self, key, data=None,
             content_type="application/json",
-            conflict_handler=doNothing):
+            conflict_handler=do_nothing):
         """Construct a new riak object. A short form for manually creating one.
 
         :param key: The key of the object. If you put it as None, one will be
@@ -91,7 +91,7 @@ class Bucket(object):
 
         return obj
 
-    def get(self, key, r=None, conflict_handler=doNothing):
+    def get(self, key, r=None, conflict_handler=do_nothing):
         """Gets an object from Riak given a key.
 
         :param key: The key

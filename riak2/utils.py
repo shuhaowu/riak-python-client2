@@ -14,7 +14,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-doNothing = lambda x: x
+do_nothing = lambda x: x
 
 # simulate class
 def Link(bucket_name, key=None, tag=None):
@@ -29,4 +29,5 @@ class MultiDict(dict):
 
     def add(self, key, value):
         self.setdefault(key, set()).add(value)
+
 
